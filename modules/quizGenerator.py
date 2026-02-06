@@ -2,22 +2,58 @@ import streamlit as st
 from sambanova import SambaNova as ai
 import json
 import time
+from modules.pdfParser import pdfExtracter
 
 client = ai(
     api_key=st.secrets["SAMBANOVA_SECRET"],
     base_url="https://api.sambanova.ai/v1",
 )
 
+
 def generateQuiz(topic, file, num):
     prompt = f"""
-Generate {num} multiple choice question on the topic {topic}
-return response strictly in following JSON format:
-[{{
+You are an exam question generator.
+
+TASK:
+Generate EXACTLY {num} high-quality multiple choice questions strictly based on the study material provided below.
+
+STUDY MATERIAL:
+----------------
+{topic or pdfExtracter(file)}
+----------------
+
+QUESTION RULES:
+1. Questions MUST be directly derived from or logically inferable from the given material.
+2. Questions must be exam-ready, clear, and unambiguous.
+3. Avoid generic questions not grounded in the provided content.
+4. Difficulty should match typical academic exam style.
+5. Avoid repetition or paraphrasing the same question.
+6. Each question must have exactly 4 options.
+7. Only one correct answer per question.
+
+OUTPUT RULES (STRICT):
+1. Output ONLY valid JSON.
+2. Do NOT include explanations, markdown, comments, or extra text.
+3. Do NOT wrap JSON in code blocks.
+4. Response must be a JSON array containing EXACTLY {num} objects.
+5. Each object must follow this structure exactly:
+
+[
+  {{
     "question": "question text",
-    "options": ["A", "B", "C", "D"],
-    "answer": "correct option"
-}}]
-do not include any explanation or any extra text keep it strictly json only response
+    "options": ["option A", "option B", "option C", "option D"],
+    "answer": "correct option text exactly matching one option"
+  }}
+]
+
+VALIDATION BEFORE RESPONSE:
+- Ensure total questions count = {num}.
+- Ensure every question has 4 options.
+- Ensure answer text exactly matches one option.
+- Ensure output is valid JSON.
+- If validation fails internally, regenerate until valid.
+
+Return ONLY the final JSON array.
 """
 
     MAX_RETRIES = 3
@@ -38,12 +74,10 @@ do not include any explanation or any extra text keep it strictly json only resp
 
         except Exception as e:
             if "429" in str(e) and attempt < MAX_RETRIES - 1:
-                wait_time = 2 ** attempt
+                wait_time = 2**attempt
                 time.sleep(wait_time)
             else:
-                st.warning(
-                    "Quiz generation rate limit exceeded. Please try later."
-                )
+                st.warning("Quiz generation rate limit exceeded. Please try later.")
                 return []
 
     if not response:
@@ -51,7 +85,7 @@ do not include any explanation or any extra text keep it strictly json only resp
 
     content = response.choices[0].message.content.strip()
 
-    #model wrapping JSON in ```json ````        `
+    # model wrapping JSON in ```json ````        `
     if content.startswith("```"):
         content = content.split("```")[1]
         content = content.replace("json", "", 1).strip()
