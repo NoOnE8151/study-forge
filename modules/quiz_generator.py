@@ -2,7 +2,7 @@ import streamlit as st
 from sambanova import SambaNova as ai
 import json
 import time
-from modules.pdfParser import pdfExtracter
+from modules.pdf_parser import pdfExtracter
 
 client = ai(
     api_key=st.secrets["SAMBANOVA_SECRET"],
