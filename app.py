@@ -105,6 +105,3 @@ if st.session_state.quiz and st.session_state.score is not None:
     st.subheader(
         f"🏆 Final Score: {st.session_state.score} / {len(st.session_state.quiz)}"
     )
-
-with st.sidebar:
-    st.header("Saved Quizes")
