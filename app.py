@@ -6,15 +6,15 @@ from components.loader import loader
 from components.quiz.quiz_view import quizView
 from components.quiz.submit_section import submitSection
 
-initSessionState()
-loadCSS()
-
-
 st.set_page_config(
     page_title="Study Forge",
     page_icon="📚",
     layout="wide",
 )
+
+initSessionState()
+loadCSS()
+
 
 st.title("📚 Study Forge")
 st.subheader("⚡ Generate AI Powered Quiz Questions in Seconds")
